@@ -51,6 +51,18 @@ services:
       timeout: 5s
       retries: 5
 
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
+        mc mb myminio/bucket --ignore-existing;
+        exit 0;
+      "
+
 volumes:
   redis_basic_data:
   postgres_data:
