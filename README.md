@@ -21,4 +21,4 @@ docker compose up --remove-orphans -d
 docker compose up --remove-orphans -d
 ```
 
-3. Зайди на http://localhost:9001 . Если все успешно, то ты увидишь окно регистрации.
+1. Зайди на http://localhost:9001 . Если все успешно, то ты увидишь окно регистрации.
