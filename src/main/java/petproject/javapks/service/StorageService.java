@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import petproject.javapks.config.MinioConfig;
+import petproject.javapks.dto.response.StoredFile;
 import petproject.javapks.exception.StorageException;
 import petproject.javapks.exception.StoredFileNotFoundException;
 
@@ -28,11 +29,8 @@ public class StorageService {
     private final MinioClient minioClient;
     private final MinioConfig.MinioProperties minioProperties;
 
-    public record StoredFile(InputStream content, String contentType, long size) {
-    }
-
-    public String upload(InputStream data, long size, String contentType) {
-        String id = UUID.randomUUID().toString();
+    public UUID upload(InputStream data, long size, String contentType) {
+        UUID id = UUID.randomUUID();
         String key = keyOf(id);
         String type = contentType != null ? contentType : MediaType.APPLICATION_OCTET_STREAM_VALUE;
         try {
@@ -52,8 +50,7 @@ public class StorageService {
         return id;
     }
 
-    public StoredFile download(String id) {
-        UUID.fromString(id);
+    public StoredFile download(UUID id) {
         String key = keyOf(id);
         StatObjectResponse stat;
         try {
@@ -97,7 +94,7 @@ public class StorageService {
         return new StoredFile(content, type, stat.size());
     }
 
-    private static String keyOf(String id) {
+    private static String keyOf(UUID id) {
         return KEY_PREFIX + id;
     }
 

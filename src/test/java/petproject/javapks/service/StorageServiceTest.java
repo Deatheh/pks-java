@@ -15,6 +15,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import petproject.javapks.config.MinioConfig;
+import petproject.javapks.dto.response.StoredFile;
 import petproject.javapks.exception.StorageException;
 import petproject.javapks.exception.StoredFileNotFoundException;
 
@@ -52,9 +53,8 @@ class StorageServiceTest {
                 .thenReturn(mock(ObjectWriteResponse.class));
         byte[] data = "hello".getBytes(StandardCharsets.UTF_8);
 
-        String id = service().upload(new ByteArrayInputStream(data), data.length, "text/plain");
+        UUID id = service().upload(new ByteArrayInputStream(data), data.length, "text/plain");
 
-        UUID.fromString(id);
         ArgumentCaptor<PutObjectArgs> captor = ArgumentCaptor.forClass(PutObjectArgs.class);
         verify(minioClient).putObject(captor.capture());
         assertEquals(BUCKET, captor.getValue().bucket());
@@ -73,7 +73,7 @@ class StorageServiceTest {
 
     @Test
     void downloadReturnsContentTypeSizeAndBytes() throws Exception {
-        String id = UUID.randomUUID().toString();
+        UUID id = UUID.randomUUID();
         byte[] data = {1, 2, 3, 4};
         StatObjectResponse stat = mock(StatObjectResponse.class);
         when(stat.contentType()).thenReturn("image/png");
@@ -83,7 +83,7 @@ class StorageServiceTest {
         when(object.readAllBytes()).thenReturn(data);
         when(minioClient.getObject(any(GetObjectArgs.class))).thenReturn(object);
 
-        StorageService.StoredFile file = service().download(id);
+        StoredFile file = service().download(id);
 
         assertEquals("image/png", file.contentType());
         assertEquals(data.length, file.size());
@@ -96,12 +96,7 @@ class StorageServiceTest {
                 .thenThrow(notFoundException());
 
         assertThrows(StoredFileNotFoundException.class, () ->
-                service().download(UUID.randomUUID().toString()));
-    }
-
-    @Test
-    void downloadInvalidIdThrowsIllegalArgument() {
-        assertThrows(IllegalArgumentException.class, () -> service().download("not-a-uuid"));
+                service().download(UUID.randomUUID()));
     }
 
     private static ErrorResponseException notFoundException() {
