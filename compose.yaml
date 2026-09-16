@@ -52,6 +52,7 @@ services:
       timeout: 5s
       retries: 5
 
+  # Если есть старый volume обязательно удалить, иначе access и secret key не будут работать
   minio-init:
     image: minio/mc:latest
     depends_on:
@@ -60,7 +61,9 @@ services:
     entrypoint: >
       /bin/sh -c "
         mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
-        mc mb myminio/bucket --ignore-existing;
+        mc mb myminio/${MINIO_BUCKET_NAME} --ignore-existing;
+        mc admin user add myminio ${MINIO_ACCESS_TOKEN} ${MINIO_SECRET_KEY};
+        mc admin policy attach myminio readwrite --user ${MINIO_ACCESS_TOKEN};
         exit 0;
       "
 
