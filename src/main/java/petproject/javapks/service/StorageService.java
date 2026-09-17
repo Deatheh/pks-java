@@ -50,6 +50,7 @@ public class StorageService {
         return id;
     }
 
+    // Вызывать через try!
     public StoredFile download(UUID id) {
         String key = keyOf(id);
         StatObjectResponse stat;
