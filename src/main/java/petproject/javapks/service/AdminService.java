@@ -27,24 +27,24 @@ public class AdminService {
     private final UserMapper userMapper;
     private final UserService userService;
 
-    public UserDto createUser(RegisterRequest dto){
+    public UserDto createUser(RegisterRequest dto) {
         User user = userMapper.toEntity(dto);
         return userMapper.toDto(userService.createUser(user));
     }
 
-    public UserDto getUserByUUID(UUID uuid){
+    public UserDto getUserByUUID(UUID uuid) {
         return userMapper.toDto(userService.getUserByUUID(uuid));
     }
 
-    public UserDto getUserByEmail(String email){
+    public UserDto getUserByEmail(String email) {
         return userMapper.toDto(userService.getUserByEmail(email));
     }
 
     public List<UserDto> getUsers(UserFilterRequest filter,
-                                  Long offset,
-                                  Long count,
-                                  String sortBy,
-                                  String sortDir) {
+            Long offset,
+            Long count,
+            String sortBy,
+            String sortDir) {
         Specification<User> spec = UserSpecification.withFilters(filter);
 
         int limit = (count != null && count > 0) ? count.intValue() : 20;
@@ -57,15 +57,14 @@ public class AdminService {
         PageRequest pageRequest = PageRequest.of(
                 pageNumber,
                 limit,
-                sort
-        );
+                sort);
 
         return userService.getUserByParams(spec, pageRequest).getContent().stream()
                 .map(userMapper::toDto)
                 .toList();
     }
 
-    public UserDto updateUser(UUID uuid, UpdateUserRequest dto){
+    public UserDto updateUser(UUID uuid, UpdateUserRequest dto) {
         User user = userService.getUserByUUID(uuid);
         user.setEmail(dto.email());
         user.setEnabled(dto.enabled());
@@ -75,13 +74,12 @@ public class AdminService {
         return userMapper.toDto(userService.updateUser(user));
     }
 
-    public void deleteUser(UUID uuid){
+    public void deleteUser(UUID uuid) {
         userService.deleteUser(userService.getUserByUUID(uuid));
     }
 
     private Sort createSort(String sortBy, String sortDir) {
         String sortField = (sortBy != null && !sortBy.isBlank()) ? sortBy : "createdAt";
-
 
         // Этот клохоз надо поменять
         List<String> allowedFields = Arrays.stream(UserFilterRequest.class.getRecordComponents())
@@ -92,8 +90,7 @@ public class AdminService {
             sortField = "createdAt";
         }
 
-        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ?
-                Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
 
         return Sort.by(direction, sortField);
     }

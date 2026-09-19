@@ -14,47 +14,41 @@ import petproject.javapks.security.CustomUserDetails;
 import petproject.javapks.security.CustomUserDetailsService;
 import petproject.javapks.utils.JwtUtils;
 
-
 import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
-    private final CustomUserDetailsService userDetailsService;
-    private final JwtService jwtService;
-    private final TokenBlacklistService tokenBlacklistService;
+        private final CustomUserDetailsService userDetailsService;
+        private final JwtService jwtService;
+        private final TokenBlacklistService tokenBlacklistService;
 
+        @Override
+        protected void doFilterInternal(HttpServletRequest request,
+                        HttpServletResponse response,
+                        FilterChain filterChain)
+                        throws ServletException, IOException {
+                String token = JwtUtils.extractToken(request);
 
-    @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
-            throws ServletException, IOException {
-        String token = JwtUtils.extractToken(request);
+                if (token != null
+                                && jwtService.isAccessToken(token)
+                                && jwtService.validateToken(token)
+                                && !tokenBlacklistService.isBlacklisted(token)) {
+                        String username = jwtService.extractUsername(token);
+                        CustomUserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-        if (token != null
-                && jwtService.isAccessToken(token)
-                && jwtService.validateToken(token)
-                && !tokenBlacklistService.isBlacklisted(token)
-        ) {
-            String username = jwtService.extractUsername(token);
-            CustomUserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                                        userDetails,
+                                        null,
+                                        userDetails.getAuthorities());
 
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            userDetails.getAuthorities()
-                    );
+                        authentication.setDetails(
+                                        new WebAuthenticationDetailsSource().buildDetails(request));
 
-            authentication.setDetails(
-                    new WebAuthenticationDetailsSource().buildDetails(request)
-            );
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                filterChain.doFilter(request, response);
         }
-
-        filterChain.doFilter(request, response);
-    }
 }

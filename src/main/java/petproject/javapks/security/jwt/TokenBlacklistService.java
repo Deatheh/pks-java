@@ -15,13 +15,11 @@ public class TokenBlacklistService {
         redisTemplate.opsForValue().set(
                 "blacklist:" + token,
                 "true",
-                Duration.ofMillis(expirationMs)
-        );
+                Duration.ofMillis(expirationMs));
     }
 
     public boolean isBlacklisted(String token) {
         return Boolean.TRUE.equals(
-                redisTemplate.hasKey("blacklist:" + token)
-        );
+                redisTemplate.hasKey("blacklist:" + token));
     }
 }

@@ -22,19 +22,17 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
 
-    public JwtTokenResponse login(LoginRequest dto){
+    public JwtTokenResponse login(LoginRequest dto) {
         log.info("Login attempt for email: {}", dto.email());
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         dto.email(),
-                        dto.password()
-                )
-        );
+                        dto.password()));
         log.info("User authentication with email: {} completed", dto.email());
         return jwtService.generateToken(dto.email());
     }
 
-    public JwtTokenResponse refresh(RefreshTokenRequest dto){
+    public JwtTokenResponse refresh(RefreshTokenRequest dto) {
         log.info("Refresh token request");
         JwtTokenResponse tokenResponse = jwtService.refreshToken(dto.refreshToken());
         log.info("Token refreshed successfully");

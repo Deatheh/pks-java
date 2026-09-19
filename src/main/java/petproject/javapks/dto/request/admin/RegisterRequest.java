@@ -7,23 +7,13 @@ import jakarta.validation.constraints.Size;
 import petproject.javapks.model.Role;
 
 public record RegisterRequest(
-        @Email(message = "Email must be valid")
-        @NotBlank(message = "Email is required")
-        @Size(min = 5, max = 100, message = "Email must be between 5 and 100 characters")
-        String email,
+                @Email(message = "Email must be valid") @NotBlank(message = "Email is required") @Size(min = 5, max = 100, message = "Email must be between 5 and 100 characters") String email,
 
-        @NotBlank(message = "Password is required")
-        @Size(min = 6, max = 256, message = "Password must be between 6 and 256 characters")
-        String password,
+                @NotBlank(message = "Password is required") @Size(min = 6, max = 256, message = "Password must be between 6 and 256 characters") String password,
 
-        @NotNull(message = "Role is required")
-        Role role,
+                @NotNull(message = "Role is required") Role role,
 
-        @NotBlank(message = "Firstname is required")
-        @Size(min = 5, max = 100, message = "Firstname must be between 5 and 100 characters")
-        String firstname,
+                @NotBlank(message = "Firstname is required") @Size(min = 5, max = 100, message = "Firstname must be between 5 and 100 characters") String firstname,
 
-        @NotBlank(message = "Lastname is required")
-        @Size(min = 5, max = 100, message = "Lastname must be between 5 and 100 characters")
-        String lastname
-) { }
+                @NotBlank(message = "Lastname is required") @Size(min = 5, max = 100, message = "Lastname must be between 5 and 100 characters") String lastname) {
+}

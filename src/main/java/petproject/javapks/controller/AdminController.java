@@ -23,15 +23,13 @@ public class AdminController {
 
     @PostMapping
     public ResponseEntity<UserDto> createUser(
-            @Valid @RequestBody RegisterRequest dto
-    ){
+            @Valid @RequestBody RegisterRequest dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(adminService.createUser(dto));
     }
 
     @GetMapping("/{uuid}")
     public ResponseEntity<UserDto> getUserById(
-            @PathVariable UUID uuid
-    ) {
+            @PathVariable UUID uuid) {
         return ResponseEntity.status(HttpStatus.OK).body(adminService.getUserByUUID(uuid));
     }
 
@@ -41,29 +39,25 @@ public class AdminController {
             @RequestParam(defaultValue = "0") Long offset,
             @RequestParam(defaultValue = "20") Long count,
             @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir
-    ) {
+            @RequestParam(defaultValue = "desc") String sortDir) {
         return ResponseEntity.status(HttpStatus.OK).body(adminService.getUsers(
                 filter,
                 offset,
                 count,
                 sortBy,
-                sortDir
-        ));
+                sortDir));
     }
 
     @PutMapping("/{uuid}")
     public ResponseEntity<UserDto> updateUser(
             @PathVariable UUID uuid,
-            @Valid @RequestBody UpdateUserRequest dto
-    ) {
+            @Valid @RequestBody UpdateUserRequest dto) {
         return ResponseEntity.status(HttpStatus.OK).body(adminService.updateUser(uuid, dto));
     }
 
     @DeleteMapping("/{uuid}")
     public ResponseEntity<Void> deleteUser(
-            @PathVariable UUID uuid
-    ){
+            @PathVariable UUID uuid) {
         adminService.deleteUser(uuid);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
