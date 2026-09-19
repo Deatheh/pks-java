@@ -6,10 +6,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import petproject.javapks.dto.response.UserDto;
 import petproject.javapks.exception.EmailAlreadyExistsException;
 import petproject.javapks.exception.UserNotFoundException;
+import petproject.javapks.mapper.UserMapper;
 import petproject.javapks.model.User;
 import petproject.javapks.repository.UserRepository;
+import petproject.javapks.security.jwt.JwtService;
 
 import java.util.UUID;
 
@@ -19,6 +22,8 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
+    private final JwtService jwtService;
 
     public User createUser(User user) {
         if (userRepository.existsByEmail(user.getEmail())) {
@@ -46,5 +51,9 @@ public class UserService {
 
     public void deleteUser(User user){
         userRepository.delete(user);
+    }
+
+    public UserDto getInfoAboutMe(String accessToken){
+        return userMapper.toDto(getUserByEmail(jwtService.extractUsername(accessToken)));
     }
 }
