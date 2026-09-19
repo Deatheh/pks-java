@@ -48,7 +48,7 @@ class StorageServiceTest {
         }
 
         @Test
-        void uploadReturnsUuidAndStoresUnderFilesPrefix() {
+        void uploadReturnsUuidAndStoresUnderFilesPrefix() throws Exception {
                 when(minioClient.putObject(any(PutObjectArgs.class)))
                                 .thenReturn(mock(ObjectWriteResponse.class));
                 byte[] data = "hello".getBytes(StandardCharsets.UTF_8);
@@ -63,7 +63,7 @@ class StorageServiceTest {
         }
 
         @Test
-        void uploadWrapsSdkFailure() {
+        void uploadWrapsSdkFailure() throws Exception {
                 when(minioClient.putObject(any(PutObjectArgs.class)))
                                 .thenThrow(new IOException("boom"));
 
@@ -72,7 +72,7 @@ class StorageServiceTest {
         }
 
         @Test
-        void downloadReturnsContentTypeSizeAndBytes() {
+        void downloadReturnsContentTypeSizeAndBytes() throws Exception {
                 UUID id = UUID.randomUUID();
                 byte[] data = { 1, 2, 3, 4 };
                 StatObjectResponse stat = mock(StatObjectResponse.class);
@@ -91,14 +91,14 @@ class StorageServiceTest {
         }
 
         @Test
-        void downloadMissingFileThrowsNotFound() {
+        void downloadMissingFileThrowsNotFound() throws Exception {
                 when(minioClient.statObject(any(StatObjectArgs.class)))
                                 .thenThrow(notFoundException());
 
                 assertThrows(StoredFileNotFoundException.class, () -> service().download(UUID.randomUUID()));
         }
 
-        private static ErrorResponseException notFoundException() {
+        private static ErrorResponseException notFoundException() throws Exception {
                 ErrorResponse response = new ErrorResponse(
                                 "NoSuchKey", "not found", BUCKET, "files/id", "/files/id", "req-id", "host-id");
                 okhttp3.Request request = new okhttp3.Request.Builder()

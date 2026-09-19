@@ -1,0 +1,7 @@
+#!/bin/sh
+# Pre-commit hook: не даёт закоммитить нерабочий код.
+# Коммит отменяется, если проект не компилируется.
+set -e
+
+echo "pre-commit: компиляция проекта (./mvnw -q compile)..."
+./mvnw -q compile

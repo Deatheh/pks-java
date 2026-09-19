@@ -1,0 +1,7 @@
+#!/bin/sh
+# Pre-push hook: не даёт запушить код с падающими тестами.
+# Push отменяется, если тесты не проходят.
+set -e
+
+echo "pre-push: прогон тестов (./mvnw -q clean test)..."
+./mvnw -q clean test
