@@ -3,6 +3,7 @@ package petproject.javapks.service;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs;
 import io.minio.StatObjectArgs;
 import io.minio.StatObjectResponse;
 import io.minio.errors.ErrorResponseException;
@@ -93,6 +94,39 @@ public class StorageService {
             throw new StorageException("Failed to download file", e);
         }
         return new StoredFile(content, type, stat.size());
+    }
+
+    public void delete(UUID id) {
+        String key = keyOf(id);
+        try {
+            minioClient.statObject(
+                    StatObjectArgs.builder()
+                            .bucket(minioProperties.bucketName())
+                            .object(key)
+                            .build()
+            );
+        } catch (ErrorResponseException e) {
+            if (isNotFound(e)) {
+                throw new StoredFileNotFoundException("File not found: " + id);
+            }
+            log.warn("Stat failed for key {}: {}", key, e.getMessage());
+            throw new StorageException("Failed to read file metadata", e);
+        } catch (Exception e) {
+            log.warn("Stat failed for key {}: {}", key, e.getMessage());
+            throw new StorageException("Failed to read file metadata", e);
+        }
+        try {
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(minioProperties.bucketName())
+                            .object(key)
+                            .build()
+            );
+        } catch (Exception e) {
+            log.warn("Delete failed for key {}: {}", key, e.getMessage());
+            throw new StorageException("Failed to delete file", e);
+        }
+        log.info("Deleted file with key {}", key);
     }
 
     private static String keyOf(UUID id) {
