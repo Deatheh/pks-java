@@ -96,6 +96,14 @@
             <version>4.12.0</version>
         </dependency>
 
+        <!-- XLSX export. FastExcel is the actively maintained fork of the
+             abandoned cn.afterturn/easyexcel (last release 2021). -->
+        <dependency>
+            <groupId>cn.idev.excel</groupId>
+            <artifactId>fastexcel</artifactId>
+            <version>1.3.0</version>
+        </dependency>
+
         <!-- JWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
