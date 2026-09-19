@@ -5,6 +5,7 @@ import io.minio.GetObjectResponse;
 import io.minio.MinioClient;
 import io.minio.ObjectWriteResponse;
 import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs;
 import io.minio.StatObjectArgs;
 import io.minio.StatObjectResponse;
 import io.minio.errors.ErrorResponseException;
@@ -28,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -48,7 +50,7 @@ class StorageServiceTest {
         }
 
         @Test
-        void uploadReturnsUuidAndStoresUnderFilesPrefix() {
+        void uploadReturnsUuidAndStoresUnderFilesPrefix() throws Exception {
                 when(minioClient.putObject(any(PutObjectArgs.class)))
                                 .thenReturn(mock(ObjectWriteResponse.class));
                 byte[] data = "hello".getBytes(StandardCharsets.UTF_8);
@@ -63,7 +65,7 @@ class StorageServiceTest {
         }
 
         @Test
-        void uploadWrapsSdkFailure() {
+        void uploadWrapsSdkFailure() throws Exception {
                 when(minioClient.putObject(any(PutObjectArgs.class)))
                                 .thenThrow(new IOException("boom"));
 
@@ -72,7 +74,7 @@ class StorageServiceTest {
         }
 
         @Test
-        void downloadReturnsContentTypeSizeAndBytes() {
+        void downloadReturnsContentTypeSizeAndBytes() throws Exception {
                 UUID id = UUID.randomUUID();
                 byte[] data = { 1, 2, 3, 4 };
                 StatObjectResponse stat = mock(StatObjectResponse.class);
@@ -91,16 +93,67 @@ class StorageServiceTest {
         }
 
         @Test
-        void downloadMissingFileThrowsNotFound() {
+        void downloadMissingFileThrowsNotFound() throws Exception {
                 when(minioClient.statObject(any(StatObjectArgs.class)))
                                 .thenThrow(notFoundException());
 
                 assertThrows(StoredFileNotFoundException.class, () -> service().download(UUID.randomUUID()));
         }
 
+        @Test
+        void deleteRemovesObjectUnderFilesPrefix() throws Exception {
+                UUID id = UUID.randomUUID();
+                when(minioClient.statObject(any(StatObjectArgs.class)))
+                                .thenReturn(mock(StatObjectResponse.class));
+
+                service().delete(id);
+
+                ArgumentCaptor<RemoveObjectArgs> captor = ArgumentCaptor.forClass(RemoveObjectArgs.class);
+                verify(minioClient).removeObject(captor.capture());
+                assertEquals(BUCKET, captor.getValue().bucket());
+                assertEquals("files/" + id, captor.getValue().object());
+        }
+
+        @Test
+        void deleteMissingFileThrowsNotFound() throws Exception {
+                when(minioClient.statObject(any(StatObjectArgs.class)))
+                                .thenThrow(notFoundException());
+
+                assertThrows(StoredFileNotFoundException.class, () -> service().delete(UUID.randomUUID()));
+        }
+
+        @Test
+        void deleteWrapsStatErrorResponseWithOtherCode() throws Exception {
+                when(minioClient.statObject(any(StatObjectArgs.class)))
+                                .thenThrow(errorResponseException("InternalError"));
+
+                assertThrows(StorageException.class, () -> service().delete(UUID.randomUUID()));
+        }
+
+        @Test
+        void deleteWrapsStatSdkFailure() throws Exception {
+                when(minioClient.statObject(any(StatObjectArgs.class)))
+                                .thenThrow(new IOException("boom"));
+
+                assertThrows(StorageException.class, () -> service().delete(UUID.randomUUID()));
+        }
+
+        @Test
+        void deleteWrapsRemoveSdkFailure() throws Exception {
+                when(minioClient.statObject(any(StatObjectArgs.class)))
+                                .thenReturn(mock(StatObjectResponse.class));
+                doThrow(new IOException("boom")).when(minioClient).removeObject(any(RemoveObjectArgs.class));
+
+                assertThrows(StorageException.class, () -> service().delete(UUID.randomUUID()));
+        }
+
         private static ErrorResponseException notFoundException() {
+                return errorResponseException("NoSuchKey");
+        }
+
+        private static ErrorResponseException errorResponseException(String code) {
                 ErrorResponse response = new ErrorResponse(
-                                "NoSuchKey", "not found", BUCKET, "files/id", "/files/id", "req-id", "host-id");
+                                code, "error", BUCKET, "files/id", "/files/id", "req-id", "host-id");
                 okhttp3.Request request = new okhttp3.Request.Builder()
                                 .url("http://localhost:9000/" + BUCKET)
                                 .build();
