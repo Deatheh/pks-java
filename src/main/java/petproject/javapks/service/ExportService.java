@@ -8,6 +8,7 @@ import petproject.javapks.dto.export.FileExportRow;
 import petproject.javapks.dto.export.ResourceExportRow;
 import petproject.javapks.dto.export.UserExportRow;
 import petproject.javapks.exception.ExportException;
+import petproject.javapks.exception.ResourceNotFoundException;
 import petproject.javapks.model.File;
 import petproject.javapks.model.Resource;
 import petproject.javapks.model.User;
@@ -15,6 +16,7 @@ import petproject.javapks.model.User;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 @Service
 @RequiredArgsConstructor
@@ -26,32 +28,29 @@ public class ExportService {
     private final FileService fileService;
 
     public byte[] exportUsers() {
-        List<UserExportRow> rows = userService.getAll().stream()
-                .map(this::toUserRow)
-                .toList();
-        return write("users", UserExportRow.class, rows);
+        return run("users", UserExportRow.class,
+                () -> userService.getAll().stream().map(this::toUserRow).toList());
     }
 
     public byte[] exportResources() {
-        List<ResourceExportRow> rows = resourceService.getAll().stream()
-                .map(this::toResourceRow)
-                .toList();
-        return write("resources", ResourceExportRow.class, rows);
+        return run("resources", ResourceExportRow.class,
+                () -> resourceService.getAll().stream().map(this::toResourceRow).toList());
     }
 
     public byte[] exportResourceFiles(UUID resourceId) {
-        // Проверяем существование ресурса: несуществующий id → 404, а не пустой лист
-        resourceService.getByUuid(resourceId);
-        List<FileExportRow> rows = fileService.getAllByResourceUuid(resourceId).stream()
-                .map(this::toFileRow)
-                .toList();
-        return write("files", FileExportRow.class, rows);
+        return run("files", FileExportRow.class, () -> {
+            // Проверяем существование ресурса: несуществующий id → 404, а не пустой лист
+            resourceService.getByUuid(resourceId);
+            return fileService.getAllByResourceUuid(resourceId).stream().map(this::toFileRow).toList();
+        });
     }
 
-    private <T> byte[] write(String sheetName, Class<T> rowClass, List<T> rows) {
+    private <T> byte[] run(String sheetName, Class<T> rowClass, Supplier<List<T>> rowsSupplier) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            FastExcel.write(baos, rowClass).sheet(sheetName).doWrite(rows);
+            FastExcel.write(baos, rowClass).sheet(sheetName).doWrite(rowsSupplier.get());
             return baos.toByteArray();
+        } catch (ResourceNotFoundException e) {
+            throw e;
         } catch (Exception e) {
             log.warn("Export to XLSX failed: {}", e.getMessage());
             throw new ExportException("Failed to export data to XLSX", e);
@@ -59,8 +58,9 @@ public class ExportService {
     }
 
     private UserExportRow toUserRow(User user) {
+        // UUID передаём строкой: в FastExcel нет встроенного конвертера для UUID
         return new UserExportRow(
-                user.getUuid(),
+                user.getUuid() != null ? user.getUuid().toString() : null,
                 user.getEmail(),
                 user.getRole() != null ? user.getRole().name() : null,
                 user.getFirstName(),
@@ -72,7 +72,7 @@ public class ExportService {
 
     private ResourceExportRow toResourceRow(Resource resource) {
         return new ResourceExportRow(
-                resource.getUuid(),
+                resource.getUuid() != null ? resource.getUuid().toString() : null,
                 resource.getTitle(),
                 resource.getDescription(),
                 resource.getCreatedAt(),
@@ -81,7 +81,7 @@ public class ExportService {
 
     private FileExportRow toFileRow(File file) {
         return new FileExportRow(
-                file.getUuid(),
+                file.getUuid() != null ? file.getUuid().toString() : null,
                 file.getName(),
                 file.getContentType(),
                 file.getSize());

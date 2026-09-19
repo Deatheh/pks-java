@@ -5,15 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class FileExportRow {
 
     @ExcelProperty("UUID")
-    private UUID uuid;
+    private String uuid;
 
     @ExcelProperty("Имя файла")
     private String name;

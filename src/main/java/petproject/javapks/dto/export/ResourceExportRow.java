@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -15,7 +14,7 @@ import java.util.UUID;
 public class ResourceExportRow {
 
     @ExcelProperty("UUID")
-    private UUID uuid;
+    private String uuid;
 
     @ExcelProperty("Название")
     private String title;
