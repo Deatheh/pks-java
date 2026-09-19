@@ -14,6 +14,7 @@ import petproject.javapks.model.User;
 import petproject.javapks.repository.UserRepository;
 import petproject.javapks.security.jwt.JwtService;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -51,6 +52,10 @@ public class UserService {
 
     public void deleteUser(User user){
         userRepository.delete(user);
+    }
+
+    public List<User> getAll() {
+        return userRepository.findAll();
     }
 
     public UserDto getInfoAboutMe(String accessToken){
