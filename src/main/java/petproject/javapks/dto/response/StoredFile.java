@@ -6,7 +6,8 @@ import java.io.InputStream;
 public record StoredFile(
         InputStream content,
         String contentType,
-        long size) implements AutoCloseable {
+        long size
+) implements AutoCloseable {
 
     @Override
     public void close() throws IOException {
