@@ -13,11 +13,8 @@ import java.time.Duration;
 
 /**
  * Creates the {@link MinioClient} used for object storage.
- * <p>
- * </p>
- * Warning
- * <p>
- * Requires {@code com.squareup.okhttp3:okhttp} as an explicit compile
+ * <p></p>
+ * Warning <p>Requires {@code com.squareup.okhttp3:okhttp} as an explicit compile
  * dependency. {@code MinioClient.Builder} inherits from
  * {@code io.minio.BaseMinioClient.Builder}, whose API exposes OkHttp types
  * ({@code httpClient(OkHttpClient)}), so javac must be able to resolve
@@ -35,10 +32,7 @@ public class MinioConfig {
 
     private final MinioProperties properties;
 
-    /**
-     * Constructor injection: keeps the bean immutable and its dependencies
-     * mandatory.
-     */
+    /** Constructor injection: keeps the bean immutable and its dependencies mandatory. */
     public MinioConfig(MinioProperties properties) {
         this.properties = properties;
     }
@@ -76,14 +70,12 @@ public class MinioConfig {
     /**
      * Type-safe binding for the {@code minio.*} keys.
      *
-     * <p>
-     * Spring Boot 4 binds records natively via their canonical constructor,
+     * <p>Spring Boot 4 binds records natively via their canonical constructor,
      * so no Lombok, no setters and no no-arg constructor are needed. Relaxed
      * binding applies: {@code minio.access-key}, {@code minio.accessKey} and
      * {@code MINIO_ACCESSKEY} all map to {@code accessKey}.
      *
-     * <p>
-     * {@code @Validated} plus the component constraints means a missing or
+     * <p>{@code @Validated} plus the component constraints means a missing or
      * blank value fails fast at startup with a clear
      * {@code BindValidationException} instead of a {@code NullPointerException}
      * somewhere deep inside the MinIO SDK on the first request.

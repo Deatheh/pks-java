@@ -40,7 +40,8 @@ public class StorageService {
                             .object(key)
                             .stream(data, size, -1)
                             .contentType(type)
-                            .build());
+                            .build()
+            );
         } catch (Exception e) {
             log.warn("Upload failed for key {}: {}", key, e.getMessage());
             throw new StorageException("Failed to upload file", e);
@@ -58,7 +59,8 @@ public class StorageService {
                     StatObjectArgs.builder()
                             .bucket(minioProperties.bucketName())
                             .object(key)
-                            .build());
+                            .build()
+            );
         } catch (ErrorResponseException e) {
             if (isNotFound(e)) {
                 throw new StoredFileNotFoundException("File not found: " + id);
@@ -78,7 +80,8 @@ public class StorageService {
                     GetObjectArgs.builder()
                             .bucket(minioProperties.bucketName())
                             .object(key)
-                            .build());
+                            .build()
+            );
         } catch (ErrorResponseException e) {
             if (isNotFound(e)) {
                 throw new StoredFileNotFoundException("File not found: " + id);

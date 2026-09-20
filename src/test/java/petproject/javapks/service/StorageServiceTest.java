@@ -35,81 +35,82 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class StorageServiceTest {
 
-        private static final String BUCKET = "test-bucket";
+    private static final String BUCKET = "test-bucket";
 
-        @Mock
-        private MinioClient minioClient;
+    @Mock
+    private MinioClient minioClient;
 
-        private final MinioConfig.MinioProperties properties = new MinioConfig.MinioProperties("http://localhost:9000",
-                        "ak", "sk", BUCKET);
+    private final MinioConfig.MinioProperties properties =
+            new MinioConfig.MinioProperties("http://localhost:9000", "ak", "sk", BUCKET);
 
-        private StorageService service() {
-                return new StorageService(minioClient, properties);
-        }
+    private StorageService service() {
+        return new StorageService(minioClient, properties);
+    }
 
-        @Test
-        void uploadReturnsUuidAndStoresUnderFilesPrefix() throws Exception {
-                when(minioClient.putObject(any(PutObjectArgs.class)))
-                                .thenReturn(mock(ObjectWriteResponse.class));
-                byte[] data = "hello".getBytes(StandardCharsets.UTF_8);
+    @Test
+    void uploadReturnsUuidAndStoresUnderFilesPrefix() throws Exception {
+        when(minioClient.putObject(any(PutObjectArgs.class)))
+                .thenReturn(mock(ObjectWriteResponse.class));
+        byte[] data = "hello".getBytes(StandardCharsets.UTF_8);
 
-                UUID id = service().upload(new ByteArrayInputStream(data), data.length, "text/plain");
+        UUID id = service().upload(new ByteArrayInputStream(data), data.length, "text/plain");
 
-                ArgumentCaptor<PutObjectArgs> captor = ArgumentCaptor.forClass(PutObjectArgs.class);
-                verify(minioClient).putObject(captor.capture());
-                assertEquals(BUCKET, captor.getValue().bucket());
-                assertEquals("files/" + id, captor.getValue().object());
-                assertEquals("text/plain", captor.getValue().contentType());
-        }
+        ArgumentCaptor<PutObjectArgs> captor = ArgumentCaptor.forClass(PutObjectArgs.class);
+        verify(minioClient).putObject(captor.capture());
+        assertEquals(BUCKET, captor.getValue().bucket());
+        assertEquals("files/" + id, captor.getValue().object());
+        assertEquals("text/plain", captor.getValue().contentType());
+    }
 
-        @Test
-        void uploadWrapsSdkFailure() throws Exception {
-                when(minioClient.putObject(any(PutObjectArgs.class)))
-                                .thenThrow(new IOException("boom"));
+    @Test
+    void uploadWrapsSdkFailure() throws Exception {
+        when(minioClient.putObject(any(PutObjectArgs.class)))
+                .thenThrow(new IOException("boom"));
 
-                assertThrows(StorageException.class,
-                                () -> service().upload(new ByteArrayInputStream(new byte[0]), 0, "text/plain"));
-        }
+        assertThrows(StorageException.class, () ->
+                service().upload(new ByteArrayInputStream(new byte[0]), 0, "text/plain"));
+    }
 
-        @Test
-        void downloadReturnsContentTypeSizeAndBytes() throws Exception {
-                UUID id = UUID.randomUUID();
-                byte[] data = { 1, 2, 3, 4 };
-                StatObjectResponse stat = mock(StatObjectResponse.class);
-                when(stat.contentType()).thenReturn("image/png");
-                when(stat.size()).thenReturn((long) data.length);
-                when(minioClient.statObject(any(StatObjectArgs.class))).thenReturn(stat);
-                GetObjectResponse object = mock(GetObjectResponse.class);
-                when(object.readAllBytes()).thenReturn(data);
-                when(minioClient.getObject(any(GetObjectArgs.class))).thenReturn(object);
+    @Test
+    void downloadReturnsContentTypeSizeAndBytes() throws Exception {
+        UUID id = UUID.randomUUID();
+        byte[] data = {1, 2, 3, 4};
+        StatObjectResponse stat = mock(StatObjectResponse.class);
+        when(stat.contentType()).thenReturn("image/png");
+        when(stat.size()).thenReturn((long) data.length);
+        when(minioClient.statObject(any(StatObjectArgs.class))).thenReturn(stat);
+        GetObjectResponse object = mock(GetObjectResponse.class);
+        when(object.readAllBytes()).thenReturn(data);
+        when(minioClient.getObject(any(GetObjectArgs.class))).thenReturn(object);
 
-                StoredFile file = service().download(id);
+        StoredFile file = service().download(id);
 
-                assertEquals("image/png", file.contentType());
-                assertEquals(data.length, file.size());
-                assertArrayEquals(data, file.content().readAllBytes());
-        }
+        assertEquals("image/png", file.contentType());
+        assertEquals(data.length, file.size());
+        assertArrayEquals(data, file.content().readAllBytes());
+    }
 
-        @Test
-        void downloadMissingFileThrowsNotFound() throws Exception {
-                when(minioClient.statObject(any(StatObjectArgs.class)))
-                                .thenThrow(notFoundException());
+    @Test
+    void downloadMissingFileThrowsNotFound() throws Exception {
+        when(minioClient.statObject(any(StatObjectArgs.class)))
+                .thenThrow(notFoundException());
 
-                assertThrows(StoredFileNotFoundException.class, () -> service().download(UUID.randomUUID()));
-        }
+        assertThrows(StoredFileNotFoundException.class, () ->
+                service().download(UUID.randomUUID()));
+    }
 
-        private static ErrorResponseException notFoundException() throws Exception {
-                ErrorResponse response = new ErrorResponse(
-                                "NoSuchKey", "not found", BUCKET, "files/id", "/files/id", "req-id", "host-id");
-                okhttp3.Request request = new okhttp3.Request.Builder()
-                                .url("http://localhost:9000/" + BUCKET)
-                                .build();
-                okhttp3.Response httpResponse = new okhttp3.Response.Builder()
-                                .request(request)
-                                .protocol(okhttp3.Protocol.HTTP_1_1)
-                                .code(404)
-                                .message("Not Found")
-                                .build();
-                return new ErrorResponseException(response, httpResponse, null);
-        }
+    private static ErrorResponseException notFoundException() {
+        ErrorResponse response = new ErrorResponse(
+                "NoSuchKey", "not found", BUCKET, "files/id", "/files/id", "req-id", "host-id");
+        okhttp3.Request request = new okhttp3.Request.Builder()
+                .url("http://localhost:9000/" + BUCKET)
+                .build();
+        okhttp3.Response httpResponse = new okhttp3.Response.Builder()
+                .request(request)
+                .protocol(okhttp3.Protocol.HTTP_1_1)
+                .code(404)
+                .message("Not Found")
+                .build();
+        return new ErrorResponseException(response, httpResponse, null);
+    }
 }
