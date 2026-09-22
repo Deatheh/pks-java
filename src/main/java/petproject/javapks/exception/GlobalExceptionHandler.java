@@ -129,6 +129,24 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(ex.getMessage(), 500));
     }
 
+    @ExceptionHandler(ExportException.class)
+    public ResponseEntity<ErrorResponse> handleExport(ExportException ex,
+                                                      HttpServletRequest request) {
+        log.warn("Export error on {}: {}", request.getRequestURI(), ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(ex.getMessage(), 500));
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex,
+                                                                HttpServletRequest request) {
+        log.warn("Resource not found on {}: {}", request.getRequestURI(), ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse(ex.getMessage(), 404));
+    }
+
     @ExceptionHandler(IOException.class)
     public ResponseEntity<ErrorResponse> handleIOException(IOException ex, HttpServletRequest request) {
         log.error("IO error on {}: {}", request.getRequestURI(), ex.getMessage(), ex);
