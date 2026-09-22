@@ -28,8 +28,17 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public User getUserByEmail(String email){
-        return userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException("User not found by email"));
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found by email"));
+    }
+
+    public User getUserByUUID(UUID uuid) {
+        return userRepository.findByUuid(uuid).orElseThrow(() -> new UserNotFoundException("User not found by uuid"));
+    }
+
+    public Page<User> getUserByParams(Specification<User> spec, PageRequest pageRequest) {
+        return userRepository.findAll(spec, pageRequest);
     }
 
     public User getUserByUUID(UUID uuid){

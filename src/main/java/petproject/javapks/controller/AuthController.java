@@ -24,23 +24,20 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<JwtTokenResponse> login(
-            @Valid @RequestBody LoginRequest dto
-    ){
+            @Valid @RequestBody LoginRequest dto) {
         return ResponseEntity.status(HttpStatus.OK).body(authService.login(dto));
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<JwtTokenResponse> refresh(
-            @Valid @RequestBody RefreshTokenRequest dto
-    ){
+            @Valid @RequestBody RefreshTokenRequest dto) {
         return ResponseEntity.status(HttpStatus.OK).body(authService.refresh(dto));
     }
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
             HttpServletRequest request,
-            @RequestBody(required = false) RefreshTokenRequest dto
-    ){
+            @RequestBody(required = false) RefreshTokenRequest dto) {
         String accessToken = JwtUtils.extractToken(request);
         String refreshToken = dto != null ? dto.refreshToken() : null;
         authService.logout(accessToken, refreshToken);

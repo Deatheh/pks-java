@@ -31,7 +31,7 @@ public class JwtService {
 
     private final TokenBlacklistService tokenBlacklistService;
 
-    public JwtTokenResponse generateToken(String username){
+    public JwtTokenResponse generateToken(String username) {
         String accessToken = buildToken(username, accessExpiration, "access");
         String refreshToken = buildToken(username, refreshExpiration, "refresh");
         return new JwtTokenResponse(accessToken, refreshToken);
@@ -49,7 +49,7 @@ public class JwtService {
         }
     }
 
-    public String extractUsername(String token){
+    public String extractUsername(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
@@ -59,7 +59,7 @@ public class JwtService {
     }
 
     public JwtTokenResponse refreshToken(String refreshToken) {
-        if (!isRefreshToken(refreshToken)){
+        if (!isRefreshToken(refreshToken)) {
             throw new InvalidTokenException("Not refresh token");
         }
 
@@ -67,7 +67,7 @@ public class JwtService {
             throw new InvalidTokenException("Invalid refresh token");
         }
 
-        if (tokenBlacklistService.isBlacklisted(refreshToken)){
+        if (tokenBlacklistService.isBlacklisted(refreshToken)) {
             throw new InvalidTokenException("Refresh token in black list");
         }
         String username = extractUsername(refreshToken);
@@ -75,7 +75,7 @@ public class JwtService {
         return generateToken(username);
     }
 
-    private SecretKey getSigningKey(){
+    private SecretKey getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secret);
         return Keys.hmacShaKeyFor(keyBytes);
     }
@@ -87,7 +87,6 @@ public class JwtService {
     public boolean isRefreshToken(String token) {
         return "refresh".equals(extractType(token));
     }
-
 
     public void blacklistToken(String token) {
         if (token == null || !validateToken(token)) {
@@ -106,7 +105,7 @@ public class JwtService {
                 .get("type", String.class);
     }
 
-    private String buildToken(String username, Long expiration, String type){
+    private String buildToken(String username, Long expiration, String type) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .subject(username)

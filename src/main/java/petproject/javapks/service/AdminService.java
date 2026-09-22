@@ -41,10 +41,11 @@ public class AdminService {
     }
 
     public List<UserDto> getUsers(UserFilterRequest filter,
-                                  Long offset,
-                                  Long count,
-                                  String sortBy,
-                                  String sortDir) {
+            Long offset,
+            Long count,
+            String sortBy,
+            String sortDir
+    ) {
         Specification<User> spec = UserSpecification.withFilters(filter);
 
         int limit = (count != null && count > 0) ? count.intValue() : 20;
