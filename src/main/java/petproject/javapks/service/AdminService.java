@@ -13,7 +13,7 @@ import petproject.javapks.dto.request.admin.UserFilterRequest;
 import petproject.javapks.dto.response.UserDto;
 import petproject.javapks.mapper.UserMapper;
 import petproject.javapks.model.User;
-import specification.UserSpecification;
+import petproject.javapks.specification.UserSpecification;
 
 import java.util.Arrays;
 import java.util.List;

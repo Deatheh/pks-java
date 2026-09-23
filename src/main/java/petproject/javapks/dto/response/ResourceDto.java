@@ -9,6 +9,7 @@ import java.util.UUID;
 public record ResourceDto(
         UUID uuid,
         String title,
+        String description,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         List<FileDto> files

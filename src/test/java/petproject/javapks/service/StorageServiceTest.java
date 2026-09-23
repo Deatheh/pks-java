@@ -50,12 +50,13 @@ class StorageServiceTest {
         }
 
         @Test
-        void uploadReturnsUuidAndStoresUnderFilesPrefix() throws Exception {
+        void uploadStoresObjectUnderFilesPrefixWithGivenId() throws Exception {
                 when(minioClient.putObject(any(PutObjectArgs.class)))
-                                .thenReturn(mock(ObjectWriteResponse.class));
+                        .thenReturn(mock(ObjectWriteResponse.class));
                 byte[] data = "hello".getBytes(StandardCharsets.UTF_8);
+                UUID id = UUID.randomUUID();
 
-                UUID id = service().upload(new ByteArrayInputStream(data), data.length, "text/plain");
+                service().upload(id, new ByteArrayInputStream(data), data.length, "text/plain");
 
                 ArgumentCaptor<PutObjectArgs> captor = ArgumentCaptor.forClass(PutObjectArgs.class);
                 verify(minioClient).putObject(captor.capture());
@@ -65,12 +66,26 @@ class StorageServiceTest {
         }
 
         @Test
+        void uploadFallsBackToOctetStreamWhenContentTypeIsNull() throws Exception {
+                when(minioClient.putObject(any(PutObjectArgs.class)))
+                        .thenReturn(mock(ObjectWriteResponse.class));
+                UUID id = UUID.randomUUID();
+
+                service().upload(id, new ByteArrayInputStream(new byte[0]), 0, null);
+
+                ArgumentCaptor<PutObjectArgs> captor = ArgumentCaptor.forClass(PutObjectArgs.class);
+                verify(minioClient).putObject(captor.capture());
+                assertEquals("application/octet-stream", captor.getValue().contentType());
+        }
+
+        @Test
         void uploadWrapsSdkFailure() throws Exception {
                 when(minioClient.putObject(any(PutObjectArgs.class)))
-                                .thenThrow(new IOException("boom"));
+                        .thenThrow(new IOException("boom"));
 
+                UUID id = UUID.randomUUID();
                 assertThrows(StorageException.class,
-                                () -> service().upload(new ByteArrayInputStream(new byte[0]), 0, "text/plain"));
+                        () -> service().upload(id, new ByteArrayInputStream(new byte[0]), 0, "text/plain"));
         }
 
         @Test

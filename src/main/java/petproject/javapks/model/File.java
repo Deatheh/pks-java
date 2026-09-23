@@ -26,6 +26,9 @@ public class File {
     @Column(nullable = false)
     private Long size;
 
+    @Column(name = "storage_id", nullable = false, updatable = false)
+    private UUID storageId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "resource", nullable = false)
     private Resource resource;

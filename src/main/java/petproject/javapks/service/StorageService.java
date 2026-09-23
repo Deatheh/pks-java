@@ -30,8 +30,7 @@ public class StorageService {
     private final MinioClient minioClient;
     private final MinioConfig.MinioProperties minioProperties;
 
-    public UUID upload(InputStream data, long size, String contentType) {
-        UUID id = UUID.randomUUID();
+    public void upload(UUID id, InputStream data, long size, String contentType) {
         String key = keyOf(id);
         String type = contentType != null ? contentType : MediaType.APPLICATION_OCTET_STREAM_VALUE;
         try {
@@ -47,8 +46,6 @@ public class StorageService {
             log.warn("Upload failed for key {}: {}", key, e.getMessage());
             throw new StorageException("Failed to upload file", e);
         }
-        log.info("Uploaded file with key {}", key);
-        return id;
     }
 
     // Вызывать через try!

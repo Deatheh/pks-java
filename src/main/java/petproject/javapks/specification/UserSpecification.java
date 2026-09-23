@@ -1,4 +1,4 @@
-package specification;
+package petproject.javapks.specification;
 
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
