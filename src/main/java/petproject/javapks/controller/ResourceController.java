@@ -21,12 +21,6 @@ import java.util.UUID;
 @RequestMapping("/api/v1/resource")
 @RequiredArgsConstructor
 public class ResourceController {
-
-    private static final MediaType XLSX_MEDIA_TYPE = MediaType.parseMediaType(
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-
-    private final ExportService exportService;
-
     private final ResourceService resourceService;
 
     @PostMapping
@@ -74,27 +68,5 @@ public class ResourceController {
     ) {
         resourceService.deleteResource(uuid);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-    }
-
-
-    // Перенести
-    @GetMapping("/export")
-    public ResponseEntity<byte[]> exportResources() {
-        byte[] body = exportService.exportResources();
-        return ResponseEntity.status(HttpStatus.OK)
-                .contentType(XLSX_MEDIA_TYPE)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"resources.xlsx\"")
-                .body(body);
-    }
-
-    @GetMapping("/{resourceId}/files/export")
-    public ResponseEntity<byte[]> exportResourceFiles(
-            @PathVariable UUID resourceId) {
-        byte[] body = exportService.exportResourceFiles(resourceId);
-        return ResponseEntity.status(HttpStatus.OK)
-                .contentType(XLSX_MEDIA_TYPE)
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"files-" + resourceId + ".xlsx\"")
-                .body(body);
     }
 }

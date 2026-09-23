@@ -2,7 +2,9 @@ package petproject.javapks.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import petproject.javapks.dto.request.admin.RegisterRequest;
@@ -10,6 +12,7 @@ import petproject.javapks.dto.request.admin.UpdateUserRequest;
 import petproject.javapks.dto.request.admin.UserFilterRequest;
 import petproject.javapks.dto.response.UserDto;
 import petproject.javapks.service.AdminService;
+import petproject.javapks.service.ExportService;
 
 import java.util.List;
 import java.util.UUID;
@@ -18,8 +21,10 @@ import java.util.UUID;
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
 public class AdminController {
-
+    private static final MediaType XLSX_MEDIA_TYPE = MediaType.parseMediaType(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     private final AdminService adminService;
+    private final ExportService exportService;
 
     @PostMapping
     public ResponseEntity<UserDto> createUser(
@@ -66,5 +71,34 @@ public class AdminController {
     ){
         adminService.deleteUser(uuid);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @GetMapping("/users/export")
+    public ResponseEntity<byte[]> exportUsers() {
+        byte[] body = exportService.exportUsers();
+        return ResponseEntity.status(HttpStatus.OK)
+                .contentType(XLSX_MEDIA_TYPE)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"users.xlsx\"")
+                .body(body);
+    }
+
+    @GetMapping("/resource/export")
+    public ResponseEntity<byte[]> exportResources() {
+        byte[] body = exportService.exportResources();
+        return ResponseEntity.status(HttpStatus.OK)
+                .contentType(XLSX_MEDIA_TYPE)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"resources.xlsx\"")
+                .body(body);
+    }
+
+    @GetMapping("/resource/{resourceId}/files/export")
+    public ResponseEntity<byte[]> exportResourceFiles(
+            @PathVariable UUID resourceId) {
+        byte[] body = exportService.exportResourceFiles(resourceId);
+        return ResponseEntity.status(HttpStatus.OK)
+                .contentType(XLSX_MEDIA_TYPE)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"files-" + resourceId + ".xlsx\"")
+                .body(body);
     }
 }

@@ -3,6 +3,7 @@ package petproject.javapks.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -35,7 +36,26 @@ public class SecurityConfig {
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/refresh"
                         ).permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/user/me",
+                                "/api/v1/resource",
+                                "/api/v1/resource/*",
+                                "/api/v1/resource/*/file/*"
+                        ).authenticated()
+                        .requestMatchers(
+                                "/api/v1/resource",
+                                "/api/v1/resource/**"
+                        ).hasAnyRole("ADMIN", "MODER")
+                        .requestMatchers(
+                                "/api/v1/admin",
+                                "/api/v1/admin/**"
+                        ).hasRole("ADMIN")
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/v1/auth/logout"
+                        ).authenticated()
+                        .anyRequest().hasRole("ADMIN")
                 )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

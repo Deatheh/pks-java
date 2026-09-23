@@ -19,11 +19,10 @@ import petproject.javapks.utils.JwtUtils;
 @RequiredArgsConstructor
 public class UserController {
 
-    private static final MediaType XLSX_MEDIA_TYPE = MediaType.parseMediaType(
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
 
     private final UserService userService;
-    private final ExportService exportService;
+
 
     @GetMapping("/me")
     public ResponseEntity<UserDto> infoMe(
@@ -33,14 +32,5 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(userService.getInfoAboutMe(accessToken));
     }
 
-    // Перетащить
-    @GetMapping("/export")
-    public ResponseEntity<byte[]> exportUsers() {
-        byte[] body = exportService.exportUsers();
-        return ResponseEntity.status(HttpStatus.OK)
-                .contentType(XLSX_MEDIA_TYPE)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"users.xlsx\"")
-                .body(body);
-    }
 
 }
