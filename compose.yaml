@@ -42,8 +42,7 @@ services:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
     ports:
-      - '9000:9000'   # S3 API
-      - '9001:9001'   # Web Console
+      - '9000:9000'   # S3 API (web console removed upstream from this minio build; no :9001)
     volumes:
       - minio_data:/bitnami/minio/data
     restart: unless-stopped
