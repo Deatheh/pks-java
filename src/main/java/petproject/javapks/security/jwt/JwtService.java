@@ -2,7 +2,6 @@ package petproject.javapks.security.jwt;
 
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +11,9 @@ import petproject.javapks.dto.response.jwt.JwtTokenResponse;
 import petproject.javapks.exception.InvalidTokenException;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Date;
 
@@ -76,8 +78,15 @@ public class JwtService {
     }
 
     private SecretKey getSigningKey(){
-        byte[] keyBytes = Decoders.BASE64.decode(secret);
-        return Keys.hmacShaKeyFor(keyBytes);
+        // Hash the configured secret so any non-empty value yields a 256-bit key;
+        // raw use (e.g. BASE64-decoding "secret") breaks jjwt's minimum key size.
+        try {
+            byte[] keyBytes = MessageDigest.getInstance("SHA-256")
+                    .digest(secret.getBytes(StandardCharsets.UTF_8));
+            return Keys.hmacShaKeyFor(keyBytes);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
     }
 
     public boolean isAccessToken(String token) {
