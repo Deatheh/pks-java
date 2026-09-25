@@ -147,6 +147,15 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(ex.getMessage(), 404));
     }
 
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex,
+                                                            HttpServletRequest request) {
+        log.warn("User not found on {}: {}", request.getRequestURI(), ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse(ex.getMessage(), 404));
+    }
+
     @ExceptionHandler(IOException.class)
     public ResponseEntity<ErrorResponse> handleIOException(IOException ex, HttpServletRequest request) {
         log.error("IO error on {}: {}", request.getRequestURI(), ex.getMessage(), ex);
