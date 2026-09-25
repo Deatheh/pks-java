@@ -12,6 +12,8 @@ public interface UserMapper {
 
     @Mapping(target = "uuid", ignore = true)
     @Mapping(target = "enabled", constant = "true")
+    @Mapping(target = "firstName", source = "firstname")
+    @Mapping(target = "lastName", source = "lastname")
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     User toEntity(RegisterRequest registerRequest);
