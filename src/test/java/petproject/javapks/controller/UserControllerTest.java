@@ -1,6 +1,5 @@
 package petproject.javapks.controller;
 
-import cn.idev.excel.FastExcel;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration;
@@ -10,27 +9,19 @@ import org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSec
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import petproject.javapks.dto.export.UserExportRow;
+import petproject.javapks.dto.response.UserDto;
+import petproject.javapks.model.Role;
 import petproject.javapks.security.jwt.JwtFilter;
-import petproject.javapks.service.ExportService;
 import petproject.javapks.service.UserService;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(value = UserController.class, excludeAutoConfiguration = {
@@ -43,8 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 public class UserControllerTest {
 
-        private static final MediaType XLSX_MEDIA_TYPE = MediaType.parseMediaType(
-                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        private static final UUID USER_UUID = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
         @Autowired
         private MockMvc mockMvc;
@@ -52,58 +42,28 @@ public class UserControllerTest {
         @MockitoBean
         private UserService userService;
 
-        @MockitoBean
-        private ExportService exportService;
-
-        // ===================== GET /api/v1/user/export =====================
+        // ===================== GET /api/v1/user/me =====================
 
         @Test
-        void exportUsers_shouldReturnXlsx_whenRequested() throws Exception {
-                // given — пароля в выгрузке быть не должно
-                UserExportRow row = new UserExportRow(
-                                "11111111-1111-1111-1111-111111111111",
+        void infoMe_shouldReturnCurrentUser_whenTokenPresent() throws Exception {
+                // given
+                UserDto response = new UserDto(
+                                USER_UUID,
                                 "test@example.com",
-                                "USER",
+                                Role.USER,
                                 "Johnny",
                                 "Doeman",
                                 true,
                                 LocalDateTime.of(2024, 1, 1, 12, 0, 0),
                                 LocalDateTime.of(2024, 1, 2, 12, 0, 0));
-                when(exportService.exportUsers()).thenReturn(writeRows(row));
+                when(userService.getInfoAboutMe("token")).thenReturn(response);
 
                 // when / then
-                MvcResult result = mockMvc.perform(get("/api/v1/user/export"))
+                mockMvc.perform(get("/api/v1/user/me")
+                                .header("Authorization", "Bearer token"))
                                 .andExpect(status().isOk())
-                                .andExpect(content().contentType(XLSX_MEDIA_TYPE))
-                                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION,
-                                                "attachment; filename=\"users.xlsx\""))
-                                .andReturn();
-
-                List<Map<Integer, String>> rows = readRows(result.getResponse().getContentAsByteArray());
-                assertEquals(List.of("UUID", "Email", "Роль", "Имя", "Фамилия", "Активен", "Создан", "Обновлён"),
-                                List.copyOf(rows.get(0).values()));
-                assertEquals("11111111-1111-1111-1111-111111111111", rows.get(1).get(0));
-                assertEquals("test@example.com", rows.get(1).get(1));
-                assertEquals("USER", rows.get(1).get(2));
-                assertEquals("Johnny", rows.get(1).get(3));
-                assertEquals("Doeman", rows.get(1).get(4));
-                assertEquals("true", rows.get(1).get(5));
-                assertEquals("2024-01-01 12:00:00", rows.get(1).get(6));
-                assertEquals("2024-01-02 12:00:00", rows.get(1).get(7));
-        }
-
-        // ===================== helpers =====================
-
-        private static byte[] writeRows(UserExportRow... rows) throws Exception {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                FastExcel.write(baos, UserExportRow.class).sheet("users").doWrite(List.of(rows));
-                return baos.toByteArray();
-        }
-
-        private static List<Map<Integer, String>> readRows(byte[] bytes) {
-                return FastExcel.read(new ByteArrayInputStream(bytes))
-                                .headRowNumber(0)
-                                .sheet()
-                                .doReadSync();
+                                .andExpect(jsonPath("$.uuid").value(USER_UUID.toString()))
+                                .andExpect(jsonPath("$.email").value("test@example.com"))
+                                .andExpect(jsonPath("$.role").value("USER"));
         }
 }
