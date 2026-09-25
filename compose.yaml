@@ -23,7 +23,7 @@ services:
     container_name: redis
     command: redis-server --requirepass ${REDIS_PASSWORD}
     ports:
-      - '6379:6379'
+      - '${REDIS_PORT}:6379'
     volumes:
       - redis_basic_data:/data
     restart: unless-stopped
@@ -35,8 +35,9 @@ services:
 
   minio:
     container_name: minio
-    image: quay.io/minio/minio
-    command: server /data --console-address ":9001"
+    # quay.io/minio/minio and docker.io/minio/* are no longer anonymously pullable;
+    # use the Bitnami legacy image instead (same minio server binary).
+    image: bitnamilegacy/minio:latest
     environment:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
@@ -44,17 +45,17 @@ services:
       - '9000:9000'   # S3 API
       - '9001:9001'   # Web Console
     volumes:
-      - minio_data:/data
+      - minio_data:/bitnami/minio/data
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "mc", "ready", "local" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
   # Если есть старый volume обязательно удалить, иначе access и secret key не будут работать
   minio-init:
-    image: minio/mc:latest
+    image: bitnamilegacy/minio-client:latest
     depends_on:
       minio:
         condition: service_healthy
