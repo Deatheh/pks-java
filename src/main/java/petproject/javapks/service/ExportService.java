@@ -63,8 +63,8 @@ public class ExportService {
                 user.getUuid() != null ? user.getUuid().toString() : null,
                 user.getEmail(),
                 user.getRole() != null ? user.getRole().name() : null,
-                user.getFirstName(),
-                user.getLastName(),
+                user.getFirstname(),
+                user.getLastname(),
                 user.getEnabled(),
                 user.getCreatedAt(),
                 user.getUpdatedAt());

@@ -32,17 +32,11 @@ public class MinioConfig {
 
     private final MinioProperties properties;
 
-    /** Constructor injection: keeps the bean immutable and its dependencies mandatory. */
     public MinioConfig(MinioProperties properties) {
         this.properties = properties;
     }
 
-    /**
-     * The client is a thread-safe singleton; inject it wherever you need it.
-     * It implements {@code AutoCloseable}, so Spring will close it (and the
-     * underlying OkHttp connection pool) on context shutdown via the inferred
-     * destroy method.
-     */
+
     @Bean
     public MinioClient minioClient() {
         return MinioClient.builder()
@@ -52,13 +46,6 @@ public class MinioConfig {
                 .build();
     }
 
-    /**
-     * MinIO's built-in default HTTP client is not tuned for interactive
-     * request/response workloads, so supply one with explicit timeouts.
-     * Deliberately kept private rather than exposed as a {@code @Bean}:
-     * publishing a bare {@link OkHttpClient} into the context invites
-     * collisions with other libraries that define one.
-     */
     private OkHttpClient httpClient() {
         return new OkHttpClient.Builder()
                 .connectTimeout(CONNECT_TIMEOUT)
@@ -67,19 +54,6 @@ public class MinioConfig {
                 .build();
     }
 
-    /**
-     * Type-safe binding for the {@code minio.*} keys.
-     *
-     * <p>Spring Boot 4 binds records natively via their canonical constructor,
-     * so no Lombok, no setters and no no-arg constructor are needed. Relaxed
-     * binding applies: {@code minio.access-key}, {@code minio.accessKey} and
-     * {@code MINIO_ACCESSKEY} all map to {@code accessKey}.
-     *
-     * <p>{@code @Validated} plus the component constraints means a missing or
-     * blank value fails fast at startup with a clear
-     * {@code BindValidationException} instead of a {@code NullPointerException}
-     * somewhere deep inside the MinIO SDK on the first request.
-     */
     @Validated
     @ConfigurationProperties(prefix = "minio")
     public record MinioProperties(

@@ -41,12 +41,23 @@ public class FileService {
             throw new IllegalArgumentException("File must not be empty");
         }
 
-        // Генерируем id заранее: он же пойдёт как PK в БД и как ключ в MinIO.
-        UUID fileId = UUID.randomUUID();
+
+
+        File file = new File();
+        file.setName(multipartFile.getOriginalFilename() != null
+                ? multipartFile.getOriginalFilename()
+                : "File");
+        file.setContentType(multipartFile.getContentType() != null
+                ? multipartFile.getContentType()
+                : org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE);
+        file.setSize(multipartFile.getSize());
+        file.setResource(resource);
+
+        FileDto newFile = fileMapper.toDto(fileRepository.save(file));
 
         try (InputStream in = multipartFile.getInputStream()) {
             storageService.upload(
-                    fileId,
+                    newFile.uuid(),
                     in,
                     multipartFile.getSize(),
                     multipartFile.getContentType()
@@ -55,18 +66,7 @@ public class FileService {
             throw new StorageException("Failed to read uploaded file", e);
         }
 
-        File file = new File();
-        file.setUuid(fileId);
-        file.setName(multipartFile.getOriginalFilename() != null
-                ? multipartFile.getOriginalFilename()
-                : fileId.toString());
-        file.setContentType(multipartFile.getContentType() != null
-                ? multipartFile.getContentType()
-                : org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE);
-        file.setSize(multipartFile.getSize());
-        file.setResource(resource);
-
-        return fileMapper.toDto(fileRepository.save(file));
+        return newFile;
     }
 
     /**

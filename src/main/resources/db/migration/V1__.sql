@@ -14,3 +14,25 @@ CREATE TABLE users
 
 ALTER TABLE users
     ADD CONSTRAINT uc_users_email UNIQUE (email);
+
+INSERT INTO users (
+    uuid,
+    email,
+    password,
+    role,
+    enabled,
+    first_name,
+    last_name,
+    created_at,
+    updated_at
+) VALUES (
+             gen_random_uuid(),
+             'admin@example.com',
+             '$2a$10$GoZp8NSEz8WTVlfElueuLO9USrkf5Gq3a5Qz61rJEVXDXOeQ0NbuG',
+             'ADMIN',
+             true,
+             'Admin',
+             'User',
+             CURRENT_TIMESTAMP,
+             CURRENT_TIMESTAMP
+);

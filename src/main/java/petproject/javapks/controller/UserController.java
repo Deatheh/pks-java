@@ -19,10 +19,7 @@ import petproject.javapks.utils.JwtUtils;
 @RequiredArgsConstructor
 public class UserController {
 
-
-
     private final UserService userService;
-
 
     @GetMapping("/me")
     public ResponseEntity<UserDto> infoMe(

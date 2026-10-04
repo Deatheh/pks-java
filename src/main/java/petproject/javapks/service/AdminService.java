@@ -70,8 +70,8 @@ public class AdminService {
         user.setEmail(dto.email());
         user.setEnabled(dto.enabled());
         user.setRole(dto.role());
-        user.setFirstName(dto.firstname());
-        user.setLastName(dto.lastname());
+        user.setFirstname(dto.firstname());
+        user.setLastname(dto.lastname());
         return userMapper.toDto(userService.updateUser(user));
     }
 

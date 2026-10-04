@@ -33,10 +33,10 @@ public class User {
     private Boolean enabled;
 
     @Column(name = "first_name")
-    private String firstName;
+    private String firstname;
 
     @Column(name = "last_name")
-    private String lastName;
+    private String lastname;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
