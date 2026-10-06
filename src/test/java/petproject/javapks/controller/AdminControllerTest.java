@@ -10,6 +10,7 @@ import org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSec
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -20,6 +21,7 @@ import petproject.javapks.exception.EmailAlreadyExistsException;
 import petproject.javapks.model.Role;
 import petproject.javapks.security.jwt.JwtFilter;
 import petproject.javapks.service.AdminService;
+import petproject.javapks.service.ExportService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,6 +36,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -53,15 +57,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 )
 public class AdminControllerTest {
 
+    private static final UUID USER_UUID = UUID.fromString("11111111-1111-1111-1111-111111111111");
+    private static final UUID RESOURCE_UUID = UUID.fromString("22222222-2222-2222-2222-222222222222");
+
+    private static final MediaType XLSX_MEDIA_TYPE = MediaType.parseMediaType(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
     private AdminService adminService;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @MockitoBean
+    private ExportService exportService;
 
-    private static final UUID USER_UUID = UUID.fromString("11111111-1111-1111-1111-111111111111");
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private UserDto buildUserDto() {
         return new UserDto(
@@ -100,8 +111,8 @@ public class AdminControllerTest {
                 .andExpect(jsonPath("$.uuid").value(USER_UUID.toString()))
                 .andExpect(jsonPath("$.email").value("test@example.com"))
                 .andExpect(jsonPath("$.role").value("USER"))
-                .andExpect(jsonPath("$.firstName").value("Johnny"))
-                .andExpect(jsonPath("$.lastName").value("Doeman"))
+                .andExpect(jsonPath("$.firstname").value("Johnny"))
+                .andExpect(jsonPath("$.lastname").value("Doeman"))
                 .andExpect(jsonPath("$.enabled").value(true));
     }
 
@@ -166,7 +177,8 @@ public class AdminControllerTest {
 
     @Test
     void getUserById_shouldReturnBadRequest_whenUuidIsInvalid() throws Exception {
-        // when / then — невалидный UUID не биндится, летит IllegalArgumentException/MethodArgumentTypeMismatch
+        // when / then — невалидный UUID не биндится, летит MethodArgumentTypeMismatch,
+        // который должен быть обработан GlobalExceptionHandler -> 400
         mockMvc.perform(get("/api/v1/admin/{uuid}", "not-a-uuid"))
                 .andExpect(status().isBadRequest());
     }
@@ -239,7 +251,7 @@ public class AdminControllerTest {
                 .andExpect(jsonPath("$.uuid").value(USER_UUID.toString()))
                 .andExpect(jsonPath("$.email").value("updated@example.com"))
                 .andExpect(jsonPath("$.role").value("ADMIN"))
-                .andExpect(jsonPath("$.firstName").value("Johnny"))
+                .andExpect(jsonPath("$.firstname").value("Johnny"))
                 .andExpect(jsonPath("$.enabled").value(false));
     }
 
@@ -287,5 +299,66 @@ public class AdminControllerTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.message").value("boom"));
+    }
+
+    // ===================== GET /api/v1/admin/users/export =====================
+
+    @Test
+    void exportUsers_shouldReturnXlsxFile() throws Exception {
+        // given
+        byte[] body = "user-xlsx-bytes".getBytes();
+        when(exportService.exportUsers()).thenReturn(body);
+
+        // when / then
+        mockMvc.perform(get("/api/v1/admin/users/export"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, XLSX_MEDIA_TYPE.toString()))
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"users.xlsx\""))
+                .andExpect(content().bytes(body));
+
+    }
+
+    // ===================== GET /api/v1/admin/resource/export =====================
+
+    @Test
+    void exportResources_shouldReturnXlsxFile() throws Exception {
+        // given
+        byte[] body = "resource-xlsx-bytes".getBytes();
+        when(exportService.exportResources()).thenReturn(body);
+
+        // when / then
+        mockMvc.perform(get("/api/v1/admin/resource/export"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, XLSX_MEDIA_TYPE.toString()))
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"resources.xlsx\""))
+                .andExpect(content().bytes(body));
+
+    }
+
+    // ============ GET /api/v1/admin/resource/{resourceId}/files/export ============
+
+    @Test
+    void exportResourceFiles_shouldReturnXlsxFileWithResourceIdInFilename() throws Exception {
+        // given
+        byte[] body = "files-xlsx-bytes".getBytes();
+        when(exportService.exportResourceFiles(RESOURCE_UUID)).thenReturn(body);
+
+        // when / then
+        mockMvc.perform(get("/api/v1/admin/resource/{resourceId}/files/export", RESOURCE_UUID))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, XLSX_MEDIA_TYPE.toString()))
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"files-" + RESOURCE_UUID + ".xlsx\""))
+                .andExpect(content().bytes(body));
+
+    }
+
+    @Test
+    void exportResourceFiles_shouldReturnBadRequest_whenResourceIdIsInvalid() throws Exception {
+        // when / then — невалидный UUID в path variable не биндится
+        mockMvc.perform(get("/api/v1/admin/resource/{resourceId}/files/export", "not-a-uuid"))
+                .andExpect(status().isBadRequest());
     }
 }
