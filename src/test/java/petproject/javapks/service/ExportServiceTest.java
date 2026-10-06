@@ -59,8 +59,8 @@ class ExportServiceTest {
                 user.setPassword("secret");
                 user.setRole(Role.USER);
                 user.setEnabled(true);
-                user.setFirstName("Johnny");
-                user.setLastName("Doeman");
+                user.setFirstname("Johnny");
+                user.setLastname("Doeman");
                 user.setCreatedAt(created);
                 user.setUpdatedAt(updated);
                 when(userService.getAll()).thenReturn(List.of(user));

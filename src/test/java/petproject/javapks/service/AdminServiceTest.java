@@ -54,8 +54,8 @@ public class AdminServiceTest {
         user.setPassword("encodedPassword");
         user.setRole(Role.USER);
         user.setEnabled(true);
-        user.setFirstName("Johnny");
-        user.setLastName("Doeman");
+        user.setFirstname("Johnny");
+        user.setLastname("Doeman");
         user.setCreatedAt(LocalDateTime.of(2024, 1, 1, 12, 0));
         user.setUpdatedAt(LocalDateTime.of(2024, 1, 2, 12, 0));
         return user;
@@ -303,8 +303,8 @@ public class AdminServiceTest {
         assertThat(existing.getEmail()).isEqualTo("updated@example.com");
         assertThat(existing.getEnabled()).isFalse();
         assertThat(existing.getRole()).isEqualTo(Role.ADMIN);
-        assertThat(existing.getFirstName()).isEqualTo("Johnny");
-        assertThat(existing.getLastName()).isEqualTo("Doeman");
+        assertThat(existing.getFirstname()).isEqualTo("Johnny");
+        assertThat(existing.getLastname()).isEqualTo("Doeman");
         verify(userService).updateUser(existing);
     }
 

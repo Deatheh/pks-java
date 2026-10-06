@@ -52,8 +52,8 @@ public class UserServiceTest {
         user.setPassword(RAW_PASSWORD);
         user.setRole(Role.USER);
         user.setEnabled(true);
-        user.setFirstName("Johnny");
-        user.setLastName("Doeman");
+        user.setFirstname("Johnny");
+        user.setLastname("Doeman");
         user.setCreatedAt(LocalDateTime.of(2024, 1, 1, 12, 0));
         user.setUpdatedAt(LocalDateTime.of(2024, 1, 2, 12, 0));
         return user;
