@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -44,6 +45,14 @@ public class GlobalExceptionHandler {
         log.warn("Type mismatch on {}: {}", request.getRequestURI(), ex.getMessage());
         return ResponseEntity.badRequest()
                 .body(new ErrorResponse(ex.getMessage(), 400));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleMessageNotReadable(HttpMessageNotReadableException ex,
+                                                                  HttpServletRequest request) {
+        log.warn("Missing or malformed request body on {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body(new ErrorResponse("Request body is missing or malformed", 400));
     }
 
     // ===== Кастомные =====
