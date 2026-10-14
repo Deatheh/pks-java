@@ -1,0 +1,11 @@
+.git/
+.idea/
+*.iml
+.env
+.env.example
+compose.yaml
+target/
+!target/java-pks-0.0.1-SNAPSHOT.jar
+mvnw
+mvnw.cmd
+.mvn/

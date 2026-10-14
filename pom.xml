@@ -203,6 +203,12 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                    <image>
+                        <!-- Укажите ваш логин на Docker Hub и имя образа -->
+                        <name>detfiniktn/java-pks:latest</name>
+                        <!-- true = автоматически сделать push в Docker Hub после сборки -->
+                        <publish>true</publish>
+                    </image>
                 </configuration>
             </plugin>
 
