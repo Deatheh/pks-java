@@ -1,74 +1,82 @@
-#file: noinspection SpellCheckingInspection
+version: '3.8'
+
 services:
-  postgres:
-    container_name: postgres
-    image: postgres:16-alpine
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_USER=${POSTGRES_USER}
+  # --- Приложение ---
+  app:
+    image: detfiniktn/java-pks:latest
+    container_name: pks-java-app
     ports:
-      - '5432:5432'
+      - "${APP_PORT:-8080}:8080"
+    volumes:
+      - ./.env:/workspace/.env:ro
+    environment:
+      # Эти переменные должны совпадать с теми, что ожидает Spring Boot приложение
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD}
+      - MINIO_URL=http://minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    networks:
+      - pks-network
+    restart: unless-stopped
+
+  # --- Инфраструктура ---
+  postgres:
+    image: postgres:16-alpine
+    container_name: pks-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - pks-network
     restart: unless-stopped
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: redis
+    container_name: pks-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD}
     ports:
-      - '6379:6379'
+      - "6379:6379"
     volumes:
-      - redis_basic_data:/data
+      - redis_data:/data
+    networks:
+      - pks-network
     restart: unless-stopped
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   minio:
-    container_name: minio
-    image: quay.io/minio/minio
+    image: minio/minio:latest
+    container_name: pks-minio
     command: server /data --console-address ":9001"
     environment:
-      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     ports:
-      - '9000:9000'   # S3 API
-      - '9001:9001'   # Web Console
+      - "9000:9000"
+      - "9001:9001"
     volumes:
       - minio_data:/data
+    networks:
+      - pks-network
     restart: unless-stopped
-    healthcheck:
-      test: [ "CMD", "mc", "ready", "local" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Если есть старый volume обязательно удалить, иначе access и secret key не будут работать
-  minio-init:
-    image: minio/mc:latest
-    depends_on:
-      minio:
-        condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "
-        mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
-        mc mb myminio/${MINIO_BUCKET_NAME} --ignore-existing;
-        mc admin user add myminio ${MINIO_ACCESS_TOKEN} ${MINIO_SECRET_KEY};
-        mc admin policy attach myminio readwrite --user ${MINIO_ACCESS_TOKEN};
-        exit 0;
-      "
 
 volumes:
-  redis_basic_data:
   postgres_data:
-    driver: local
+  redis_data:
   minio_data:
-    driver: local
+
+networks:
+  pks-network:
+    driver: bridge
