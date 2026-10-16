@@ -80,6 +80,25 @@ chmod +x ./mvnw
 | POST  | `/api/v1/files`             | multipart-поле `file` → `201 {"id"}`      |
 | GET   | `/api/v1/files/{uuid}`      | байты файла с content-type                |
 
+### Тестовые пользователи
+
+Применяются автоматически через Flyway (`V1__.sql` — admin, `V3__.sql` — moder/user).
+Только для локальной разработки, пароли — в командном vault / у мейнтейнера,
+в репозиторий не коммитим:
+
+| Email               | Роль  |
+|---------------------|-------|
+| `admin@example.com` | `ADMIN` |
+| `moder@example.com` | `MODER` |
+| `user@example.com`  | `USER`  |
+
+Пример:
+
+```bash
+curl -s localhost:8080/api/v1/auth/login -H 'Content-Type: application/json' \
+  -d '{"email":"moder@example.com","password":"<из vault>"}'
+```
+
 ### Остановка
 
 ```bash
