@@ -6,13 +6,19 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import petproject.javapks.dto.export.ExportFormat;
 import petproject.javapks.dto.request.admin.RegisterRequest;
 import petproject.javapks.dto.request.admin.UpdateUserRequest;
 import petproject.javapks.dto.request.admin.UserFilterRequest;
+import petproject.javapks.dto.response.ExportedFileDto;
+import petproject.javapks.dto.response.ImportResultDto;
 import petproject.javapks.dto.response.UserDto;
 import petproject.javapks.service.AdminService;
 import petproject.javapks.service.ExportService;
+import petproject.javapks.service.ImportService;
 
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +31,7 @@ public class AdminController {
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     private final AdminService adminService;
     private final ExportService exportService;
+    private final ImportService importService;
 
     @PostMapping
     public ResponseEntity<UserDto> createUser(
@@ -72,7 +79,7 @@ public class AdminController {
         adminService.deleteUser(uuid);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
-
+    /*
     @GetMapping("/users/export")
     public ResponseEntity<byte[]> exportUsers() {
         byte[] body = exportService.exportUsers();
@@ -80,7 +87,7 @@ public class AdminController {
                 .contentType(XLSX_MEDIA_TYPE)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"users.xlsx\"")
                 .body(body);
-    }
+    }*/
 
     @GetMapping("/resource/export")
     public ResponseEntity<byte[]> exportResources() {
@@ -100,5 +107,25 @@ public class AdminController {
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=\"files-" + resourceId + ".xlsx\"")
                 .body(body);
+    }
+
+    @PostMapping(value = "/users/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ImportResultDto> importUsers(
+            @RequestPart("file") MultipartFile file,
+            @RequestParam(defaultValue = ",") char delimiter,
+            @RequestParam(defaultValue = "false") boolean dryRun) {
+        return ResponseEntity.ok(importService.importUsers(file, delimiter, dryRun));
+    }
+
+    @GetMapping("/users/export")
+    public ResponseEntity<byte[]> exportUsers(@RequestParam(defaultValue = "CSV") ExportFormat format) {
+        return fileResponse(exportService.exportUsers(format));
+    }
+
+    private static ResponseEntity<byte[]> fileResponse(ExportedFileDto file) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(file.contentType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.filename() + "\"")
+                .body(file.bytes());
     }
 }

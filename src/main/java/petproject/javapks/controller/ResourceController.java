@@ -7,11 +7,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import petproject.javapks.dto.export.ExportFormat;
 import petproject.javapks.dto.request.resource.CreateResourceRequest;
 import petproject.javapks.dto.request.resource.ResourceFilterRequest;
 import petproject.javapks.dto.request.resource.UpdateResourceRequest;
+import petproject.javapks.dto.response.ExportedFileDto;
+import petproject.javapks.dto.response.ImportResultDto;
 import petproject.javapks.dto.response.ResourceDto;
 import petproject.javapks.service.ExportService;
+import petproject.javapks.service.ImportService;
 import petproject.javapks.service.ResourceService;
 
 import java.util.List;
@@ -22,6 +27,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ResourceController {
     private final ResourceService resourceService;
+    private final ImportService importService;
+    private final ExportService exportService;
 
     @PostMapping
     public ResponseEntity<ResourceDto> createResource(
@@ -68,5 +75,26 @@ public class ResourceController {
     ) {
         resourceService.deleteResource(uuid);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ImportResultDto> importResources(
+            @RequestPart("file") MultipartFile file,
+            @RequestParam(defaultValue = ",") char delimiter,
+            @RequestParam(defaultValue = "false") boolean dryRun) {
+        return ResponseEntity.ok(importService.importResources(file, delimiter, dryRun));
+    }
+
+    private static ResponseEntity<byte[]> fileResponse(ExportedFileDto file) {
+        return ResponseEntity.ok()                                                        // 200
+                .contentType(MediaType.parseMediaType(file.contentType()))                // text/csv или xlsx-mime
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + file.filename() + "\"")               // «сохранить как users.csv»
+                .body(file.bytes());                                                      // сами байты
+    }
+
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportResources(@RequestParam(defaultValue = "CSV") ExportFormat format) {
+        return fileResponse(exportService.exportResources(format));
     }
 }

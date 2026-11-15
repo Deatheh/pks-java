@@ -14,9 +14,11 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import petproject.javapks.dto.response.ImportResultDto;
 
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -111,6 +113,32 @@ public class GlobalExceptionHandler {
     }
 
     // ===== Data & Business =====
+
+    @ExceptionHandler(ImportException.class)
+    public ResponseEntity<ErrorResponse> handleImport(ImportException ex,
+                                                      HttpServletRequest request) {
+        log.warn("Import error on {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body(new ErrorResponse(ex.getMessage(), 400));
+    }
+
+    // Единственный хендлер с телом не-ErrorResponse: отчёт по строкам и есть тело ошибки
+    @ExceptionHandler(ImportValidationException.class)
+    public ResponseEntity<ImportResultDto> handleImportValidation(ImportValidationException ex,
+                                                                  HttpServletRequest request) {
+        log.warn("Import validation failed on {}: {} error(s)",
+                request.getRequestURI(), ex.getReport().errors().size());
+        return ResponseEntity.unprocessableEntity().body(ex.getReport());
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSize(MaxUploadSizeExceededException ex,
+                                                             HttpServletRequest request) {
+        log.warn("Upload too large on {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(new ErrorResponse("File exceeds the upload size limit", 413));
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex,
                                                                       HttpServletRequest request) {
