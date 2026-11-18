@@ -16,12 +16,15 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import petproject.javapks.dto.request.admin.RegisterRequest;
 import petproject.javapks.dto.request.admin.UpdateUserRequest;
+import petproject.javapks.dto.export.ExportFormat;
+import petproject.javapks.dto.response.ExportedFileDto;
 import petproject.javapks.dto.response.UserDto;
 import petproject.javapks.exception.EmailAlreadyExistsException;
 import petproject.javapks.model.Role;
 import petproject.javapks.security.jwt.JwtFilter;
 import petproject.javapks.service.AdminService;
 import petproject.javapks.service.ExportService;
+import petproject.javapks.service.ImportService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -71,6 +74,9 @@ public class AdminControllerTest {
 
     @MockitoBean
     private ExportService exportService;
+
+    @MockitoBean
+    private ImportService importService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -307,10 +313,11 @@ public class AdminControllerTest {
     void exportUsers_shouldReturnXlsxFile() throws Exception {
         // given
         byte[] body = "user-xlsx-bytes".getBytes();
-        when(exportService.exportUsers()).thenReturn(body);
+        when(exportService.exportUsers(ExportFormat.XLSX))
+                .thenReturn(new ExportedFileDto(body, XLSX_MEDIA_TYPE.toString(), "users.xlsx"));
 
         // when / then
-        mockMvc.perform(get("/api/v1/admin/users/export"))
+        mockMvc.perform(get("/api/v1/admin/users/export").param("format", "XLSX"))
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.CONTENT_TYPE, XLSX_MEDIA_TYPE.toString()))
                 .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION,
