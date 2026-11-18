@@ -1,0 +1,42 @@
+name: amd64-image
+
+# Сборка linux/amd64-образа на x86-раннере GitHub Actions.
+# arm64 собирается локально (spring-boot:build-image нативно на ARM-машине),
+# затем обе платформы объединяются в multi-arch манифест (см. README).
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Тег образа (без суффикса платформы)"
+        required: true
+        default: "0.1"
+  # триггер для первого запуска: workflow ещё не на main, а dispatch через API
+  # доступен только для workflow из default-ветки
+  push:
+    paths:
+      - .github/workflows/amd64-image.yml
+
+env:
+  TAG: "0.1"
+
+jobs:
+  build-amd64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push linux/amd64 image
+        run: >
+          ./mvnw -B spring-boot:build-image
+          -Dspring-boot.build-image.imagePlatform=linux/amd64
+          -Ddocker.image.name=vladcheck/java-pks:${{ inputs.tag || env.TAG }}-amd64
