@@ -19,6 +19,8 @@ import petproject.javapks.dto.response.FileDto;
 import petproject.javapks.dto.response.ResourceDto;
 import petproject.javapks.exception.ResourceNotFoundException;
 import petproject.javapks.security.jwt.JwtFilter;
+import petproject.javapks.service.ExportService;
+import petproject.javapks.service.ImportService;
 import petproject.javapks.service.ResourceService;
 
 import java.time.LocalDateTime;
@@ -61,6 +63,12 @@ public class ResourceControllerTest {
 
         @MockitoBean
         private ResourceService resourceService;
+
+        @MockitoBean
+        private ImportService importService;
+
+        @MockitoBean
+        private ExportService exportService;
 
         private final ObjectMapper objectMapper = new ObjectMapper();
 
