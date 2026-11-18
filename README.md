@@ -66,6 +66,50 @@ chmod +x ./mvnw
 ./mvnw clean install
 ```
 
+### Сборка и публикация Docker-образа
+
+Образ собирается Spring Boot'ом через buildpacks (Dockerfile нет):
+
+```bash
+./mvnw spring-boot:build-image          # mvnw.cmd на Windows
+```
+
+Имя образа — свойство `docker.image.name` в `pom.xml` (по умолчанию
+`detfiniktn/java-pks:latest`), пуш в Docker Hub включён (`publish=true`).
+
+**Мультиплатформенная сборка.** В Spring Boot 4 у `build-image` нет списка
+платформ — только одна платформа на сборку. Поэтому мультиарх-образ
+(`linux/amd64` + `linux/arm64`) собирается в три шага — по одному образу
+на платформу, затем они объединяются в единый манифест:
+
+```bash
+# 1. Собрать и запушить каждую платформу отдельным тегом
+./mvnw spring-boot:build-image \
+    -Dspring-boot.build-image.imagePlatform=linux/amd64 \
+    -Ddocker.image.name=detfiniktn/java-pks:0.1-amd64
+
+./mvnw spring-boot:build-image \
+    -Dspring-boot.build-image.imagePlatform=linux/arm64 \
+    -Ddocker.image.name=detfiniktn/java-pks:0.1-arm64
+
+# 2. Объединить в один multi-arch манифест
+docker buildx imagetools create -t detfiniktn/java-pks:0.1 \
+    detfiniktn/java-pks:0.1-amd64 detfiniktn/java-pks:0.1-arm64
+```
+
+(на Windows те же команды через `mvnw.cmd` и однострочный ввод).
+
+Требования к окружению:
+
+- Docker Desktop → Settings → General → включить
+  **"Use containerd for pulling and storing images"** — без этого сборка
+  не-нативной платформы не сработает.
+- `DOCKER_DEFAULT_PLATFORM` не должна быть задана — иначе она перебьёт
+  `imagePlatform`.
+- Пуш требует `docker login` в Docker Hub.
+- Проверка результата: `docker buildx imagetools inspect detfiniktn/java-pks:0.1`
+  должен показать обе платформы в секции `Manifests`.
+
 ### Ручки API
 
 Все ручки, кроме login/refresh, требуют заголовок `Authorization: Bearer <accessToken>`
